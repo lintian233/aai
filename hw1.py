@@ -30,13 +30,20 @@ def manhattan_distance(current: State, goal: State) -> int:
                 break
     return distance
 
+def misplaced_tiles(current: State, goal: State) -> int:
+    """计算错位方块数启发函数（0除外）"""
+    count = 0
+    for i in range(9):
+        if current[i] != 0 and current[i] != goal[i]:
+            count += 1
+    return count
+
 def get_neighbors(state: State) -> List[Move]:
     """生成所有可能的合法移动"""
     moves = []
     empty_index = state.index(0)
     ex, ey = empty_index % 3, empty_index // 3
 
-    # 定义移动方向和坐标变化
     directions = [
         ('上', (0, 1)), ('下', (0, -1)),
         ('左', (1, 0)), ('右', (-1, 0))
@@ -51,7 +58,7 @@ def get_neighbors(state: State) -> List[Move]:
             moves.append((action, tuple(new_state)))
     return moves
 
-def a_star_search(initial: State, goal: State) -> Optional[List[Move]]:
+def a_star_search(initial: State, goal: State, h_func) -> Optional[List[Move]]:
     """执行A*搜索算法"""
     open_heap = []
     visited = set()
@@ -61,7 +68,7 @@ def a_star_search(initial: State, goal: State) -> Optional[List[Move]]:
         parent=None,
         action=None,
         g=0,
-        h=manhattan_distance(initial, goal)
+        h=h_func(initial, goal)
     )
     heapq.heappush(open_heap, (initial_node.f, initial_node))
 
@@ -89,7 +96,7 @@ def a_star_search(initial: State, goal: State) -> Optional[List[Move]]:
                 parent=current,
                 action=action,
                 g=current.g + 1,
-                h=manhattan_distance(neighbor_state, goal)
+                h=h_func(neighbor_state, goal)
             )
             heapq.heappush(open_heap, (neighbor_node.f, neighbor_node))
 
@@ -120,7 +127,8 @@ if __name__ == "__main__":
     initial_state = (2, 8, 3, 1, 6, 4, 7, 0, 5)
     goal_state = (1, 2, 3, 8, 0, 4, 7, 6, 5)
 
-    solution_path = a_star_search(initial_state, goal_state)
+    # solution_path = a_star_search(initial_state, goal_state, manhattan_distance)
+    solution_path = a_star_search(initial_state, goal_state, misplaced_tiles)
 
     if solution_path:
         print("找到解！共需移动步数:", len(solution_path))
